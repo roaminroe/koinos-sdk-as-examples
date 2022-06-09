@@ -1,0 +1,220 @@
+syntax = "proto3";
+
+package wallet;
+
+import "koinos/options.proto";
+
+// Objects
+
+/** Authority
+ * Set of addresses (or contract ids), weights, and weight
+ * threshold that defines an authority to perform
+ * certain actions.
+ * - When an address is set it is required its signature
+ *   in the transaction.
+ * - When a contract id is set it is required to be
+ *   the "caller". 
+ */
+
+message key_auth {
+  oneof key_type {
+    bytes address = 1 [(koinos.btype) = ADDRESS];
+    bytes contract_id = 2 [(koinos.btype) = CONTRACT_ID];
+  }
+  uint32 weight = 3;
+}
+
+message authority {
+  repeated key_auth key_auths = 1;
+  uint32 weight_threshold = 2;
+  uint64 last_update = 3 [jstype = JS_STRING];
+}
+
+message authority_names {
+  repeated string names = 1;
+}
+
+/** Contract protection
+ * set of key-values that make link between
+ * contracts and authorities. The authority can be
+ * native (authority defined in the contract wallet)
+ * or external (authority defined in other contract)
+ */
+
+message protected_contract {
+  bytes contract_id = 1 [(koinos.btype) = CONTRACT_ID];
+  oneof protection {
+    uint32 entry_point = 2;
+    bool remaining_entry_points = 3;
+  }
+}
+
+message external_authority {
+  bytes contract_id = 1 [(koinos.btype) = CONTRACT_ID];
+  uint32 entry_point = 2;
+}
+
+message authority_contract {
+  oneof authority {
+    string native = 1;
+    external_authority external = 2;
+  }
+  uint32 delay_update = 3;
+  uint64 last_update = 4 [jstype = JS_STRING];
+}
+
+message key_array {
+  repeated bytes keys = 1;
+}
+
+message bytes_array {
+  repeated bytes keys = 1;
+}
+
+message string_array {
+  repeated string keys = 1;
+}
+
+// Interface
+
+// @description Adds a new authority to the contract
+// @read-only false
+message add_authority_arguments {
+  string name = 1;
+  authority authority = 2;
+  bool impossible = 3;
+}
+
+message add_authority_result {
+  bool value = 1;
+}
+
+// @description Request update recovery authority
+// @read-only false
+message request_update_recovery_arguments {
+  oneof type {
+    authority authority = 1;
+    bool remove = 2;
+  }
+  uint64 application_time = 3 [jstype = JS_STRING];
+}
+
+message request_update_recovery_result {
+  bool value = 1;
+}
+
+// @description Cancel request update recovery authority
+// @read-only false
+message cancel_request_update_recovery_arguments {}
+
+message cancel_request_update_recovery_result {
+  bool value = 1;
+}
+
+// @description Update authority
+// @read-only false
+message update_authority_arguments {
+  string name = 1;
+  oneof type {
+    authority authority = 2;
+    bool remove = 3;
+  }
+  bool impossible = 4;
+}
+
+message update_authority_result {
+  bool value = 1;
+}
+
+// @description Adds a new protection to a contract
+// @read-only false
+message add_protection_arguments {
+  protected_contract protected_contract = 1;
+  authority_contract authority = 2;
+}
+
+message add_protection_result {
+  bool value = 1;
+}
+
+// @description Request the update of an existing protection
+// @read-only false
+message request_update_protection_arguments {
+  uint32 id = 1;
+  protected_contract protected_contract = 2;
+  oneof type {
+    authority_contract authority = 3;
+    bool remove = 4;
+  }
+  uint64 application_time = 5 [jstype = JS_STRING];
+}
+
+message request_update_protection_result {
+  bool value = 1;
+}
+
+// @description Cancel the request to update an existing protection
+// @read-only false
+message cancel_request_update_protection_arguments {
+  uint32 id = 1;
+}
+
+message cancel_request_update_protection_result {
+  bool value = 1;
+}
+
+// @description Updates a protection to a contract
+// @read-only false
+message update_protection_arguments {
+  protected_contract protected_contract = 1;
+  oneof type {
+    authority_contract authority = 2;
+    bool remove = 3;
+  }
+}
+
+message update_protection_result {
+  bool value = 1;
+}
+
+// @description require authority by name
+// @read-only false
+message require_authority_arguments {
+  string name = 1;
+}
+
+message require_authority_result {
+  bool value = 1;
+}
+
+// @description Get authorities
+// @read-only true
+message get_authorities_arguments {}
+
+message get_authorities_result {
+  repeated add_authority_arguments authorities = 1;
+}
+
+// @description Get contracts protected and their authorities
+// @read-only true
+message get_protections_arguments {}
+
+message get_protections_result {
+  repeated add_protection_arguments protections = 1;
+}
+
+// @description Get requests to update protection
+// @read-only true
+message get_requests_update_protection_arguments {}
+
+message get_requests_update_protection_result {
+  repeated request_update_protection_arguments requests = 1;
+}
+
+// @description Get request update recovery
+// @read-only true
+message get_request_update_recovery_arguments {}
+
+message get_request_update_recovery_result {
+  request_update_recovery_arguments request = 1;
+}
